@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Physics Visualization System - Interactive Demo</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    #root {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #028090 0%, #00A896 100%);
+      color: white;
+      padding: 40px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 18px;
+      opacity: 0.9;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 968px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      color: #028090;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 15px;
+      border: 2px solid #E2E8F0;
+      border-radius: 8px;
+      font-size: 16px;
+      font-family: inherit;
+      resize: vertical;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: #028090;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      background: #026d7a;
+    }
+
+    button:disabled {
+      background: #CBD5E0;
+      cursor: not-allowed;
+    }
+
+    .example-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #F0F4F8;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+      color: #1E293B;
+      transition: all 0.2s;
+    }
+
+    .example-btn:hover {
+      background: #E2E8F0;
+    }
+
+    canvas {
+      border: 2px solid #E2E8F0;
+      border-radius: 8px;
+      display: block;
+      width: 100%;
+      margin-bottom: 20px;
+    }
+
+    .slider-container {
+      margin-bottom: 20px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #475569;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #E2E8F0;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .tag {
+      background: #E0F2F1;
+      padding: 4px 12px;
+      border-radius: 4px;
+      color: #028090;
+      font-weight: bold;
+      display: inline-block;
+      margin-bottom: 15px;
+    }
+
+    .info-box {
+      background: #F0F9FF;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #BAE6FD;
+      margin-top: 20px;
+    }
+
+    .info-box p {
+      margin: 0;
+      font-size: 13px;
+      color: #0369A1;
+      line-height: 1.6;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-top: 25px;
+    }
+
+    .feature-card {
+      padding: 20px;
+      background: #F8FAFC;
+      border-radius: 8px;
+      border: 1px solid #E2E8F0;
+    }
+
+    .feature-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .feature-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 16px;
+      color: #1E293B;
+    }
+
+    .feature-card p {
+      margin: 0;
+      font-size: 14px;
+      color: #64748B;
+      line-height: 1.5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94A3B8;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+
+    .loading {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    function PhysicsVisualizationSystem() {
+      const [problemText, setProblemText] = useState('');
+      const [isAnalyzing, setIsAnalyzing] = useState(false);
+      const [parsedData, setParsedData] = useState(null);
+      const [simulationParams, setSimulationParams] = useState({});
+      const canvasRef = useRef(null);
+      const animationRef = useRef(null);
+
+      const exampleProblems = [
+        "A ball is thrown straight up with a speed of 10 m/s. Visualize the motion of the ball.",
+        "A car accelerates from rest at 2 m/s² for 5 seconds. Show the motion.",
+        "A block slides down a frictionless incline at 30 degrees with initial velocity 5 m/s.",
+        "Two objects collide: Object A (2 kg) moving at 3 m/s hits stationary Object B (1 kg).",
+      ];
+
+      const analyzeProblem = async (text) => {
+        setIsAnalyzing(true);
+        
+        try {
+          // For demo: use fallback parser
+          const parsed = fallbackParser(text);
+          setParsedData(parsed);
+          
+          const params = {
+            velocity: parsed.parameters?.initialVelocity?.magnitude || 10,
+            gravity: parsed.parameters?.gravity || 9.8,
+            angle: parsed.parameters?.angle || 90,
+            mass: parsed.objects?.[0]?.mass || 1,
+          };
+          setSimulationParams(params);
+        } catch (error) {
+          console.error('Error analyzing problem:', error);
+        } finally {
+          setIsAnalyzing(false);
+        }
+      };
+
+      const fallbackParser = (text) => {
+        const velocityMatch = text.match(/(\d+(?:\.\d+)?)\s*m\/s/);
+        const angleMatch = text.match(/(\d+)\s*degrees?/);
+        
+        return {
+          problemType: 'projectile',
+          objects: [{ name: 'Ball', mass: 1, initialPosition: { x: 0, y: 0 } }],
+          parameters: {
+            initialVelocity: { 
+              magnitude: velocityMatch ? parseFloat(velocityMatch[1]) : 10, 
+              direction: 'up', 
+              angle: angleMatch ? parseFloat(angleMatch[1]) : 90 
+            },
+            acceleration: { x: 0, y: -9.8 },
+            gravity: 9.8
+          },
+          units: { velocity: 'm/s', acceleration: 'm/s²', distance: 'm', mass: 'kg' },
+          adjustableParameters: ['velocity', 'gravity', 'angle'],
+          description: 'Vertical projectile motion'
+        };
+      };
+
+      useEffect(() => {
+        if (!parsedData || !canvasRef.current) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        let time = 0;
+        const dt = 0.016;
+        const scale = 20;
+
+        const animate = () => {
+          ctx.fillStyle = '#f0f4f8';
+          ctx.fillRect(0, 0, width, height);
+
+          ctx.strokeStyle = '#333';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0, height - 50);
+          ctx.lineTo(width, height - 50);
+          ctx.stroke();
+
+          const v0 = simulationParams.velocity;
+          const g = simulationParams.gravity;
+          const angle = (simulationParams.angle || 90) * Math.PI / 180;
+
+          const vx = v0 * Math.cos(angle);
+          const vy = v0 * Math.sin(angle);
+
+          const x = vx * time;
+          const y = vy * time - 0.5 * g * time * time;
+
+          const canvasX = width / 2 + x * scale;
+          const canvasY = height - 50 - y * scale;
+
+          ctx.strokeStyle = '#028090';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          for (let t = 0; t <= time; t += 0.1) {
+            const px = width / 2 + vx * t * scale;
+            const py = height - 50 - (vy * t - 0.5 * g * t * t) * scale;
+            if (t === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          if (y >= 0) {
+            ctx.fillStyle = '#02C39A';
+            ctx.strokeStyle = '#028090';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(canvasX, canvasY, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            const vxCurrent = vx;
+            const vyCurrent = vy - g * time;
+            const arrowScale = 3;
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(canvasX, canvasY);
+            ctx.lineTo(canvasX + vxCurrent * arrowScale, canvasY - vyCurrent * arrowScale);
+            ctx.stroke();
+
+            const arrowAngle = Math.atan2(-vyCurrent, vxCurrent);
+            ctx.fillStyle = '#FF6B6B';
+            ctx.beginPath();
+            ctx.moveTo(canvasX + vxCurrent * arrowScale, canvasY - vyCurrent * arrowScale);
+            ctx.lineTo(
+              canvasX + vxCurrent * arrowScale - 10 * Math.cos(arrowAngle - Math.PI / 6),
+              canvasY - vyCurrent * arrowScale + 10 * Math.sin(arrowAngle - Math.PI / 6)
+            );
+            ctx.lineTo(
+              canvasX + vxCurrent * arrowScale - 10 * Math.cos(arrowAngle + Math.PI / 6),
+              canvasY - vyCurrent * arrowScale + 10 * Math.sin(arrowAngle + Math.PI / 6)
+            );
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#1E293B';
+            ctx.font = '14px Arial';
+            ctx.fillText(`Time: ${time.toFixed(2)}s`, 20, 30);
+            ctx.fillText(`Height: ${y.toFixed(2)}m`, 20, 50);
+            ctx.fillText(`Velocity: ${Math.sqrt(vxCurrent**2 + vyCurrent**2).toFixed(2)} m/s`, 20, 70);
+            ctx.fillText(`Position: (${x.toFixed(2)}, ${y.toFixed(2)})m`, 20, 90);
+          }
+
+          time += dt;
+
+          if (y < 0 && time > 0.1) {
+            time = 0;
+          }
+
+          animationRef.current = requestAnimationFrame(animate);
+        };
+
+        animate();
+
+        return () => {
+          if (animationRef.current) {
+            cancelAnimationFrame(animationRef.current);
+          }
+        };
+      }, [parsedData, simulationParams]);
+
+      return (
+        <div>
+          <div className="header">
+            <h1>🔬 AI-Powered Physics Visualization</h1>
+            <p>Transform text problems into interactive simulations</p>
+          </div>
+
+          <div className="grid">
+            <div>
+              <div className="card">
+                <h2>📝 Problem Statement</h2>
+                
+                <textarea
+                  value={problemText}
+                  onChange={(e) => setProblemText(e.target.value)}
+                  placeholder="Enter a physics problem (e.g., 'A ball is thrown upward at 15 m/s...')"
+                />
+
+                <button
+                  onClick={() => analyzeProblem(problemText)}
+                  disabled={!problemText || isAnalyzing}
+                >
+                  {isAnalyzing ? <span className="loading">🔄</span> : '🚀'} {isAnalyzing ? 'Analyzing...' : 'Analyze & Visualize'}
+                </button>
+
+                <div style={{ marginTop: '20px' }}>
+                  <h3 style={{ fontSize: '16px', color: '#64748B', marginBottom: '10px' }}>
+                    Example Problems:
+                  </h3>
+                  {exampleProblems.map((example, idx) => (
+                    <button
+                      key={idx}
+                      className="example-btn"
+                      onClick={() => {
+                        setProblemText(example);
+                        analyzeProblem(example);
+                      }}
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {parsedData && (
+                <div className="card" style={{ marginTop: '20px' }}>
+                  <h2>🧠 AI Extraction</h2>
+                  
+                  <div style={{ marginBottom: '15px' }}>
+                    <strong>Problem Type:</strong>{' '}
+                    <span className="tag">{parsedData.problemType}</span>
+                  </div>
+
+                  <div style={{ marginBottom: '15px' }}>
+                    <strong>Description:</strong>
+                    <p style={{ margin: '5px 0', color: '#64748B' }}>{parsedData.description}</p>
+                  </div>
+
+                  <div style={{ marginBottom: '15px' }}>
+                    <strong>Objects:</strong>
+                    {parsedData.objects?.map((obj, idx) => (
+                      <div key={idx} style={{ marginLeft: '15px', marginTop: '5px', padding: '8px', background: '#F8FAFC', borderRadius: '4px' }}>
+                        • {obj.name} {obj.mass && `(${obj.mass} kg)`}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="card">
+                <h2>🎨 Interactive Simulation</h2>
+
+                {parsedData ? (
+                  <>
+                    <canvas
+                      ref={canvasRef}
+                      width={600}
+                      height={400}
+                    />
+
+                    <div>
+                      <h3 style={{ fontSize: '18px', color: '#1E293B', marginBottom: '15px' }}>
+                        ⚙️ Real-Time Controls
+                      </h3>
+
+                      <div className="slider-container">
+                        <div className="slider-label">
+                          <span>Initial Velocity</span>
+                          <span>{simulationParams.velocity} m/s</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="30"
+                          step="0.5"
+                          value={simulationParams.velocity}
+                          onChange={(e) => setSimulationParams({
+                            ...simulationParams,
+                            velocity: parseFloat(e.target.value)
+                          })}
+                        />
+                      </div>
+
+                      <div className="slider-container">
+                        <div className="slider-label">
+                          <span>Gravity</span>
+                          <span>{simulationParams.gravity} m/s²</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="20"
+                          step="0.1"
+                          value={simulationParams.gravity}
+                          onChange={(e) => setSimulationParams({
+                            ...simulationParams,
+                            gravity: parseFloat(e.target.value)
+                          })}
+                        />
+                      </div>
+
+                      <div className="slider-container">
+                        <div className="slider-label">
+                          <span>Launch Angle</span>
+                          <span>{simulationParams.angle}°</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="90"
+                          step="5"
+                          value={simulationParams.angle}
+                          onChange={(e) => setSimulationParams({
+                            ...simulationParams,
+                            angle: parseFloat(e.target.value)
+                          })}
+                        />
+                      </div>
+
+                      <div className="info-box">
+                        <p>💡 <strong>Tip:</strong> Adjust the parameters above to see how they affect the motion in real-time. The red arrow shows the velocity vector.</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="empty-state">
+                    <div className="empty-icon">📊</div>
+                    <p style={{ fontSize: '18px' }}>
+                      Enter a physics problem and click "Analyze & Visualize"<br />to see the interactive simulation
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2>✨ System Capabilities</h2>
+            
+            <div className="features-grid">
+              {[
+                { icon: '🧠', title: 'AI Understanding', desc: 'Natural language processing of physics problems' },
+                { icon: '🔄', title: 'Auto-Conversion', desc: 'Text to structured data transformation' },
+                { icon: '🎨', title: 'Visual Generation', desc: 'Automatic creation of interactive models' },
+                { icon: '⚡', title: 'Real-Time Updates', desc: 'Instant parameter manipulation' },
+                { icon: '📊', title: 'Multiple Scenarios', desc: 'Explore what-if possibilities' },
+                { icon: '🎯', title: 'Intuitive UI', desc: 'Easy-to-use interface for learning' }
+              ].map((feature, idx) => (
+                <div key={idx} className="feature-card">
+                  <div className="feature-icon">{feature.icon}</div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<PhysicsVisualizationSystem />, document.getElementById('root'));
+  </script>
+</body>
+</html>
